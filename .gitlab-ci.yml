@@ -1,0 +1,16 @@
+image: 'node:10-slim'
+
+variables:
+  NODE_ENV: 'test'
+  SECRET_KEY: 'nyan cat'
+
+before_script:
+  - yarn install
+
+build:
+  script:
+    - yarn build
+
+test:
+  script:
+    - yarn test:cov
