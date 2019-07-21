@@ -1,0 +1,12 @@
+image: 'node:10-slim'
+
+before_script:
+  - yarn install
+
+build:
+  script:
+    - yarn build
+
+test:
+  script:
+    - yarn test:cov
