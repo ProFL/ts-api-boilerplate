@@ -6,11 +6,7 @@ export interface RouteMeta {
 }
 
 export function Route(path: string, method: string) {
-  return function(
-    target: any,
-    propertyKey?: string,
-    propertyDescriptor?: PropertyDescriptor,
-  ): void {
+  return function(target: any, propertyKey?: string): void {
     let decoratorTarget = target;
 
     if (propertyKey) {

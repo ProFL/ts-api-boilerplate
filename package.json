@@ -48,10 +48,12 @@
     "build": "tsc -p tsconfig.build.json",
     "predocker:dev": "yarn install",
     "docker:dev": "yarn start:dev",
-    "lint": "eslint .",
+    "lint": "eslint --ext .js,.ts .",
+    "postlint": "prettier --write ./{src,__tests__}/**/*.ts",
     "orm": "typeorm",
     "start": "node build/index.js",
     "start:dev": "nodemon --watch 'src/**/*.ts' --exec ts-node -r dotenv/config src/index.ts",
+    "pretest": "npm run lint",
     "test": "jest --setupFiles dotenv/config",
     "test:cov": "jest --setupFiles dotenv/config --coverage",
     "test:watch": "nodemon --watch './**/*.spec.ts' --exec jest --setupFiles dotenv/config"

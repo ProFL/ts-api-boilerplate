@@ -1,5 +1,5 @@
-import { Request, Response } from 'express';
-import { Get } from '../decorators/controller';
+import {Request, Response} from 'express';
+import {Get} from '../decorators/controller';
 import ControllerBase from './controller-base';
 
 export default class PingController extends ControllerBase {
@@ -9,6 +9,6 @@ export default class PingController extends ControllerBase {
 
   @Get('/')
   index(_: Request, res: Response): void {
-    res.json({ message: 'pong' });
+    res.json({message: 'pong'});
   }
 }

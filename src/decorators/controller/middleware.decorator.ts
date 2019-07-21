@@ -3,11 +3,7 @@ import {Handler} from 'express';
 export const MIDDLEWARE_META_KEY = Symbol('middleware');
 
 export function Middleware(handlers: Handler | Handler[]) {
-  return function(
-    target: any,
-    propertyKey?: string,
-    propertyDescriptor?: PropertyDescriptor,
-  ): void {
+  return function(target: any, propertyKey?: string): void {
     let decoratorTarget = target;
 
     if (propertyKey) {

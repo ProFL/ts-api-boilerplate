@@ -28,7 +28,7 @@
       "rules": {
         "@typescript-eslint/no-explicit-any": "off"
       }
-    }
+    },
     {
       "files": "**/*.decorator.ts",
       "rules": {

@@ -1,4 +1,4 @@
-import { Connection, createConnection } from 'typeorm';
+import {Connection, createConnection} from 'typeorm';
 import getEnvSecret from '../helpers/get-env-secret.helper';
 
 export default async function ormConfig(): Promise<Connection> {
