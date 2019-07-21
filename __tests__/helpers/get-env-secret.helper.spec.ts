@@ -3,7 +3,7 @@ import * as uuid from 'uuid/v4';
 import * as os from 'os';
 import getEnvSecret from '../../src/helpers/get-env-secret.helper';
 
-describe('getEnvSecret(key)', function () {
+describe('getEnvSecret(key)', function() {
   test('should throw an error on a unavailable key', async () => {
     const key = uuid();
     try {
@@ -20,7 +20,9 @@ describe('getEnvSecret(key)', function () {
           break;
         case 'win32':
           expect(err.errno).toBe(-4058);
-          expect(err.path).toMatch(new RegExp(`\\${key}$`));
+          expect(err.path).toMatch(new RegExp(`\\\\${key}$`));
+          break;
+        default:
           break;
       }
     }
