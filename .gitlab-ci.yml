@@ -13,4 +13,4 @@ build:
 
 test:
   script:
-    - yarn test:cov
+    - yarn test
