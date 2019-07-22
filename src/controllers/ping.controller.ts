@@ -1,14 +1,9 @@
-import {Request, Response} from 'express';
-import {Get} from '../decorators/controller';
-import ControllerBase from './controller-base';
+import {Get, JsonController} from 'routing-controllers';
 
-export default class PingController extends ControllerBase {
-  constructor() {
-    super('/ping');
-  }
-
+@JsonController('/ping')
+export default class PingController {
   @Get('/')
-  index(_: Request, res: Response): void {
-    res.json({message: 'pong'});
+  index(): {message: string} {
+    return {message: 'pong'};
   }
 }

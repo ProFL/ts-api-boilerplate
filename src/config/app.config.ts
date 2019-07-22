@@ -1,18 +1,29 @@
-import {Application} from 'express';
-import getControllers from '../controllers';
-import expressConfig from './express.config';
+import {useContainer} from 'class-validator';
+import * as Koa from 'koa';
+import * as path from 'path';
+import 'reflect-metadata';
+import {useKoaServer} from 'routing-controllers';
+import Container from 'typedi';
+import koaConfig from './koa.config';
 import ormConfig from './orm.config';
-import passportConfig from './passport.config';
+import PassportConfigFactory from './passport.config';
 
-export default async function appConfig(): Promise<Application> {
-  const app = await expressConfig();
-  const dbConnection = await ormConfig();
+export default async function appConfig(): Promise<Koa> {
+  const app = await koaConfig();
 
-  app.set('dbConnection', dbConnection);
+  useContainer(Container);
 
-  app.use(await passportConfig());
+  await ormConfig();
 
-  (await getControllers()).forEach(router => app.use(router));
+  app.use(await new PassportConfigFactory().build());
+
+  const controllersDir = path.resolve(__dirname, '..', 'controllers');
+  useKoaServer(app, {
+    controllers: [
+      `${controllersDir}/**/*.controller.js`,
+      `${controllersDir}/**/*.controller.ts`,
+    ],
+  });
 
   return app;
 }
