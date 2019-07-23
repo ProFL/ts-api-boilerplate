@@ -1,19 +1,17 @@
-import {validate} from 'class-validator';
-import {Context} from 'koa';
 import * as _ from 'lodash';
 import {
   Body,
-  Ctx,
   HttpCode,
   JsonController,
-  MethodNotAllowedError,
+  NotFoundError,
   Param,
   Patch,
   Post,
 } from 'routing-controllers';
 import {Repository} from 'typeorm';
 import {InjectRepository} from 'typeorm-typedi-extensions';
-import {User} from '../models/User.model';
+import {UserUpdateDto} from '../helpers/dtos/user-update.dto';
+import {User, UserValidationGroups} from '../models/User.model';
 
 @JsonController('/users')
 export default class UsersController {
@@ -24,23 +22,16 @@ export default class UsersController {
   @Post('/')
   @HttpCode(201)
   async create(
-    @Ctx() ctx: Context,
-    @Body() user: User,
+    @Body({
+      validate: {
+        groups: ['default', 'create'] as UserValidationGroups[],
+        validationError: {target: false},
+        skipMissingProperties: true,
+        forbidNonWhitelisted: true,
+      },
+    })
+    user: User,
   ): Promise<Partial<User> | void> {
-    const validationErrors = await validate(user, {groups: ['create']});
-
-    if (validationErrors.length > 0) {
-      ctx.res.setHeader('Content-Type', 'application/json');
-      ctx.res.write(
-        JSON.stringify({
-          name: 'UnprocessableEntity',
-          message: 'Bad entity schema',
-          errors: validationErrors,
-        }),
-      );
-      return ctx.res.end();
-    }
-
     const createProps = [
       'userName',
       'firstName',
@@ -48,18 +39,9 @@ export default class UsersController {
       'email',
       'isAdmin',
     ];
+
     return _.pick(
-      await this.userRepo.save(
-        this.userRepo.create(
-          _.pick(user, [
-            'userName',
-            'firstName',
-            'lastName',
-            'email',
-            'isAdmin',
-          ]),
-        ),
-      ),
+      await this.userRepo.save(this.userRepo.create(_.pick(user, createProps))),
       ['id', ...createProps],
     );
   }
@@ -67,10 +49,40 @@ export default class UsersController {
   @Patch('/:id')
   async update(
     @Param('id') id: string,
-    @Ctx() ctx: Context,
-    @Body() user: User,
-  ): Promise<Partial<User>> {
-    // TODO: Implement update method
-    throw new MethodNotAllowedError('Implementation pending');
+    @Body({
+      validate: {
+        groups: ['default', 'update'] as UserValidationGroups[],
+        validationError: {target: false},
+        skipMissingProperties: true,
+        forbidNonWhitelisted: true,
+        forbidUnknownValues: true,
+      },
+    })
+    user: UserUpdateDto,
+  ): Promise<Partial<User> | void> {
+    let dbUser: User;
+    try {
+      dbUser = await this.userRepo.findOneOrFail(id);
+    } catch (err) {
+      throw new NotFoundError(`User with id ${id} not found`);
+    }
+
+    Object.assign(
+      dbUser,
+      _.pick(user, ['firstName', 'lastName', 'email', 'password', 'isAdmin']),
+    );
+
+    if (user.newPassword) {
+      dbUser.password = user.newPassword;
+    }
+
+    return _.omit(await this.userRepo.save(dbUser), [
+      'password',
+      'passwordToken',
+      'createdAt',
+      'updatedAt',
+      'jwtService',
+      'bcryptService',
+    ]);
   }
 }

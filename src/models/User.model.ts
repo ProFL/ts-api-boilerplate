@@ -1,8 +1,10 @@
 import {
   IsAlphanumeric,
   IsBoolean,
+  IsDefined,
   IsEmail,
   IsString,
+  Length,
   MinLength,
 } from 'class-validator';
 import Container from 'typedi';
@@ -18,41 +20,49 @@ import {
 import BcryptService from '../services/bcrypt.service';
 import JwtService from '../services/jwt.service';
 
+export type UserValidationGroups = 'default' | 'create' | 'update';
+
 @Entity()
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column({nullable: false, unique: true})
-  @IsString({groups: ['create']})
-  @IsAlphanumeric({groups: ['create']})
-  @MinLength(2, {groups: ['create']})
+  @IsDefined({groups: ['create'] as UserValidationGroups[]})
+  @IsString({groups: ['default'] as UserValidationGroups[]})
+  @IsAlphanumeric({groups: ['default'] as UserValidationGroups[]})
+  @MinLength(2, {groups: ['default'] as UserValidationGroups[]})
   userName: string;
 
   @Column({nullable: false})
-  @IsString({groups: ['create', 'update']})
-  @MinLength(2)
+  @IsDefined({groups: ['create'] as UserValidationGroups[]})
+  @IsString({groups: ['default'] as UserValidationGroups[]})
+  @MinLength(2, {groups: ['default'] as UserValidationGroups[]})
   firstName: string;
 
   @Column({nullable: false})
-  @IsString({groups: ['create', 'update']})
-  @MinLength(2, {groups: ['create', 'update']})
+  @IsDefined({groups: ['create'] as UserValidationGroups[]})
+  @IsString({groups: ['default'] as UserValidationGroups[]})
+  @MinLength(2, {groups: ['default'] as UserValidationGroups[]})
   lastName: string;
 
   @Column({nullable: false, unique: true})
-  @IsEmail({}, {groups: ['create', 'update', 'authenticate']})
+  @IsDefined({groups: ['create'] as UserValidationGroups[]})
+  @IsEmail(undefined, {groups: ['default'] as UserValidationGroups[]})
   email: string;
 
   @Column({nullable: true})
-  @MinLength(6, {groups: ['create', 'update', 'authenticate']})
+  @IsDefined({groups: ['update'] as UserValidationGroups[]})
+  @Length(6, 72, {groups: ['default'] as UserValidationGroups[]})
   password: string;
 
   @Column()
-  @IsString({groups: ['update']})
+  @IsString({groups: ['default'] as UserValidationGroups[]})
   passwordToken: string;
 
   @Column({nullable: false, default: false})
-  @IsBoolean({groups: ['create', 'update']})
+  @IsDefined({groups: ['create'] as UserValidationGroups[]})
+  @IsBoolean({groups: ['default'] as UserValidationGroups[]})
   isAdmin: boolean;
 
   @CreateDateColumn()
