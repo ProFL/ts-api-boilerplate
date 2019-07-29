@@ -4,18 +4,18 @@ import * as path from 'path';
 import 'reflect-metadata';
 import {useKoaServer} from 'routing-controllers';
 import Container from 'typedi';
+import constantsConfig from './constants.config';
 import koaConfig from './koa.config';
 import ormConfig from './orm.config';
-import PassportConfigFactory from './passport.config';
 
 export default async function appConfig(): Promise<Koa> {
   const app = await koaConfig();
 
-  useContainer(Container);
+  useContainer(Container); // class-validator
 
   await ormConfig();
 
-  app.use(await new PassportConfigFactory().build());
+  await constantsConfig();
 
   const controllersDir = path.resolve(__dirname, '..', 'controllers');
   useKoaServer(app, {
@@ -23,6 +23,10 @@ export default async function appConfig(): Promise<Koa> {
       `${controllersDir}/**/*.controller.js`,
       `${controllersDir}/**/*.controller.ts`,
     ],
+    authorizationChecker: (action, roles) => {
+      // TODO: Implementation
+      return true;
+    },
   });
 
   return app;

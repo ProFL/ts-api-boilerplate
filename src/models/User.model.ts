@@ -16,11 +16,17 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  getRepository,
 } from 'typeorm';
 import BcryptService from '../services/bcrypt.service';
 import JwtService from '../services/jwt.service';
+import {IsUnique} from '../helpers/decorators/is-unique.decorator';
 
-export type UserValidationGroups = 'default' | 'create' | 'update';
+export enum UserValidationGroups {
+  DEFAULT = 'DEFAULT',
+  CREATE = 'CREATE',
+  UPDATE = 'UPDATE',
+}
 
 @Entity()
 export class User {
@@ -28,41 +34,37 @@ export class User {
   id: string;
 
   @Column({nullable: false, unique: true})
-  @IsDefined({groups: ['create'] as UserValidationGroups[]})
-  @IsString({groups: ['default'] as UserValidationGroups[]})
-  @IsAlphanumeric({groups: ['default'] as UserValidationGroups[]})
-  @MinLength(2, {groups: ['default'] as UserValidationGroups[]})
+  @IsString()
+  @IsAlphanumeric()
+  @MinLength(2)
+  @IsUnique(User)
   userName: string;
 
   @Column({nullable: false})
-  @IsDefined({groups: ['create'] as UserValidationGroups[]})
-  @IsString({groups: ['default'] as UserValidationGroups[]})
-  @MinLength(2, {groups: ['default'] as UserValidationGroups[]})
+  @IsString()
+  @MinLength(2)
   firstName: string;
 
   @Column({nullable: false})
-  @IsDefined({groups: ['create'] as UserValidationGroups[]})
-  @IsString({groups: ['default'] as UserValidationGroups[]})
-  @MinLength(2, {groups: ['default'] as UserValidationGroups[]})
+  @IsString()
+  @MinLength(2)
   lastName: string;
 
   @Column({nullable: false, unique: true})
-  @IsDefined({groups: ['create'] as UserValidationGroups[]})
-  @IsEmail(undefined, {groups: ['default'] as UserValidationGroups[]})
+  @IsEmail()
+  @IsUnique(User)
   email: string;
 
   @Column({nullable: true})
-  @IsDefined({groups: ['update'] as UserValidationGroups[]})
-  @Length(6, 72, {groups: ['default'] as UserValidationGroups[]})
+  @Length(6, 72)
   password: string;
 
   @Column()
-  @IsString({groups: ['default'] as UserValidationGroups[]})
+  @IsString()
   passwordToken: string;
 
   @Column({nullable: false, default: false})
-  @IsDefined({groups: ['create'] as UserValidationGroups[]})
-  @IsBoolean({groups: ['default'] as UserValidationGroups[]})
+  @IsBoolean()
   isAdmin: boolean;
 
   @CreateDateColumn()

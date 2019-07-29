@@ -1,5 +1,10 @@
 import Container from 'typedi';
-import {Connection, createConnection, useContainer} from 'typeorm';
+import {
+  Connection,
+  ConnectionOptions,
+  createConnection,
+  useContainer,
+} from 'typeorm';
 import getEnvSecret from '../helpers/get-env-secret.helper';
 
 export default async function ormConfig(): Promise<Connection> {
@@ -19,21 +24,31 @@ export default async function ormConfig(): Promise<Connection> {
       logging: process.env.TYPEORM_LOGGING === 'true',
     });
   } else {
-    const typeormUrl = await getEnvSecret('TYPEORM_URL');
-    if (typeormUrl) {
-      connection = await createConnection({
-        type: 'postgres',
-        url: await getEnvSecret('TYPEORM_URL'),
-        synchronize: false,
-        logging: (await getEnvSecret('TYPEORM_LOGGING')) === 'true',
-        entities: ['build/models/**/*.js'],
-        migrations: ['build/migrations/**/*.js'],
-        subscribers: ['build/subscribers/**/*.js'],
-      });
-    }
-  }
+    const baseOpts: ConnectionOptions = {
+      type: 'postgres',
+      url: await getEnvSecret('TYPEORM_URL'),
+      synchronize: false,
+      logging: (await getEnvSecret('TYPEORM_LOGGING')) === 'true',
+    };
 
-  connection = await createConnection();
+    const finalOpts: ConnectionOptions =
+      process.env.NODE_ENV === 'production'
+        ? {
+            ...baseOpts,
+            entities: ['build/models/**/*.js'],
+            migrations: ['build/migrations/**/*.js'],
+            subscribers: ['build/subscribers/**/*.js'],
+          }
+        : {
+            ...baseOpts,
+            synchronize: process.env.TYPEORM_SYNCHRONIZE === 'true',
+            entities: ['src/models/**/*.ts'],
+            migrations: ['src/migrations/**/*.ts'],
+            subscribers: ['src/subscribers/**/*.ts'],
+          };
+
+    connection = await createConnection(finalOpts);
+  }
 
   return connection;
 }

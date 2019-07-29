@@ -1,4 +1,4 @@
-import {Validator} from 'class-validator';
+import {Validator, ValidatorOptions} from 'class-validator';
 import {Context} from 'koa';
 import * as _ from 'lodash';
 import {
@@ -10,8 +10,10 @@ import {
   NotFoundError,
   Post,
 } from 'routing-controllers';
+import {Inject} from 'typedi';
 import {Repository} from 'typeorm';
 import {InjectRepository} from 'typeorm-typedi-extensions';
+import {CONSTANT_KEYS} from '../config/constants.config';
 import {AuthDto} from '../helpers/dtos/auth.dto';
 import {User} from '../models/User.model';
 import JwtService from '../services/jwt.service';
@@ -21,26 +23,24 @@ export interface TokenResponse {
   token: string;
 }
 
-@JsonController('/auth')
+@JsonController('/api/v1/auth')
 export default class AuthController {
   constructor(
     private readonly jwtService: JwtService,
     private readonly validator: Validator,
+    @Inject(CONSTANT_KEYS.VALIDATOR_OPTIONS)
+    private readonly defaultValidatorOptions: ValidatorOptions,
     @InjectRepository(User) private readonly userRepo: Repository<User>,
   ) {}
 
   @Post('/login')
   async login(
     @Ctx() ctx: Context,
-    @Body({
-      validate: {
-        forbidNonWhitelisted: true,
-        forbidUnknownValues: true,
-        validationError: {target: false},
-      },
-    })
+    @Body({required: true})
     authInfo: AuthDto,
   ): Promise<TokenResponse | void> {
+    this.validator.validateOrReject(authInfo, this.defaultValidatorOptions);
+
     let user: User;
 
     try {
