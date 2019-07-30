@@ -12,17 +12,17 @@ export default async function ormConfig(): Promise<Connection> {
 
   useContainer(Container);
 
-  let connection: Connection;
+  let connOpts: ConnectionOptions;
 
   if (nodeEnv === 'test') {
-    connection = await createConnection({
+    connOpts = {
       type: 'sqlite',
       name: 'memory',
       database: ':memory:',
       entities: ['src/models/**/*.ts'],
       synchronize: true,
       logging: process.env.TYPEORM_LOGGING === 'true',
-    });
+    };
   } else {
     const baseOpts: ConnectionOptions = {
       type: 'postgres',
@@ -31,7 +31,7 @@ export default async function ormConfig(): Promise<Connection> {
       logging: (await getEnvSecret('TYPEORM_LOGGING')) === 'true',
     };
 
-    const finalOpts: ConnectionOptions =
+    connOpts =
       process.env.NODE_ENV === 'production'
         ? {
             ...baseOpts,
@@ -46,9 +46,7 @@ export default async function ormConfig(): Promise<Connection> {
             migrations: ['src/migrations/**/*.ts'],
             subscribers: ['src/subscribers/**/*.ts'],
           };
-
-    connection = await createConnection(finalOpts);
   }
 
-  return connection;
+  return createConnection(connOpts);
 }

@@ -1,10 +1,8 @@
 import {Validator, ValidatorOptions} from 'class-validator';
-import {Context} from 'koa';
 import * as _ from 'lodash';
 import {
   BadRequestError,
   Body,
-  Ctx,
   InternalServerError,
   JsonController,
   NotFoundError,
@@ -16,7 +14,7 @@ import {InjectRepository} from 'typeorm-typedi-extensions';
 import {CONSTANT_KEYS} from '../config/constants.config';
 import {AuthDto} from '../helpers/dtos/auth.dto';
 import {User} from '../models/User.model';
-import JwtService from '../services/jwt.service';
+import AuthService from '../services/auth.service';
 
 export interface TokenResponse {
   user: Partial<User>;
@@ -26,8 +24,8 @@ export interface TokenResponse {
 @JsonController('/api/v1/auth')
 export default class AuthController {
   constructor(
-    private readonly jwtService: JwtService,
     private readonly validator: Validator,
+    private readonly authService: AuthService,
     @Inject(CONSTANT_KEYS.VALIDATOR_OPTIONS)
     private readonly defaultValidatorOptions: ValidatorOptions,
     @InjectRepository(User) private readonly userRepo: Repository<User>,
@@ -35,7 +33,6 @@ export default class AuthController {
 
   @Post('/login')
   async login(
-    @Ctx() ctx: Context,
     @Body({required: true})
     authInfo: AuthDto,
   ): Promise<TokenResponse | void> {
@@ -60,16 +57,14 @@ export default class AuthController {
       throw new BadRequestError('Invalid password');
     }
 
-    await ctx.login(user);
+    const token = await this.authService.login(
+      authInfo.email,
+      authInfo.password,
+    );
 
     return {
       user: _.pick(user, ['userName', 'firstName', 'lastName', 'isAdmin']),
-      token: await this.jwtService.sign(
-        {
-          id: user.id,
-        },
-        '30d',
-      ),
+      token,
     };
   }
 }
