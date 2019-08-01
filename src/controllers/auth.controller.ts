@@ -3,6 +3,8 @@ import * as _ from 'lodash';
 import {
   BadRequestError,
   Body,
+  Ctx,
+  Delete,
   InternalServerError,
   JsonController,
   NotFoundError,
@@ -13,8 +15,9 @@ import {Repository} from 'typeorm';
 import {InjectRepository} from 'typeorm-typedi-extensions';
 import {CONSTANT_KEYS} from '../config/constants.config';
 import {AuthDto} from '../helpers/dtos/auth.dto';
+import {KoaContext} from '../helpers/interfaces/koa-context.interface';
 import {User} from '../models/User.model';
-import AuthService from '../services/auth.service';
+import JwtAuthService from '../services/jwt-auth.service';
 
 export interface TokenResponse {
   user: Partial<User>;
@@ -25,7 +28,7 @@ export interface TokenResponse {
 export default class AuthController {
   constructor(
     private readonly validator: Validator,
-    private readonly authService: AuthService,
+    private readonly authService: JwtAuthService,
     @Inject(CONSTANT_KEYS.VALIDATOR_OPTIONS)
     private readonly defaultValidatorOptions: ValidatorOptions,
     @InjectRepository(User) private readonly userRepo: Repository<User>,
@@ -66,5 +69,10 @@ export default class AuthController {
       user: _.pick(user, ['userName', 'firstName', 'lastName', 'isAdmin']),
       token,
     };
+  }
+
+  @Delete('/logout')
+  async logout(@Ctx() context: KoaContext): Promise<void> {
+    return this.authService.logout(context);
   }
 }

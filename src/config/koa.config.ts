@@ -4,9 +4,15 @@ import * as helmet from 'koa-helmet';
 import * as morgan from 'koa-morgan';
 import {useContainer} from 'routing-controllers';
 import Container from 'typedi';
+import {
+  CustomAppState,
+  CustomKoaExtensions,
+} from '../helpers/interfaces/koa-context.interface';
 
-export default async function expressConfig(): Promise<Koa> {
-  const app = new Koa();
+export default async function expressConfig(): Promise<
+  Koa<CustomAppState, CustomKoaExtensions>
+> {
+  const app = new Koa<CustomAppState, CustomKoaExtensions>();
 
   app.use(morgan('dev'));
   app.use(helmet());
