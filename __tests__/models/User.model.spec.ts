@@ -1,11 +1,15 @@
+import Container from 'typedi';
 import {Connection, Repository} from 'typeorm';
 import ormConfig from '../../src/config/orm.config';
-import bcryptHelper from '../../src/helpers/bcrypt.helper';
 import {User} from '../../src/models/User.model';
-import givenUserData from '../fixtures/models/given-user-data.fixture';
-import jwtHelper from '../../src/helpers/jwt.helper';
+import BcryptService from '../../src/services/bcrypt.service';
+import JwtService from '../../src/services/jwt.service';
+import UsersFixtures from '../fixtures/models/users.fixture';
 
 describe('User Entity', function() {
+  let usersFixtures: UsersFixtures;
+  let bcryptService: BcryptService;
+  let jwtService: JwtService;
   let ormConnection: Connection;
   let userRepo: Repository<User>;
   let testUser: User;
@@ -13,10 +17,15 @@ describe('User Entity', function() {
 
   beforeAll(async () => {
     ormConnection = await ormConfig();
+
+    usersFixtures = Container.get(UsersFixtures);
+    bcryptService = Container.get(BcryptService);
+    jwtService = Container.get(JwtService);
+
     userRepo = ormConnection.getRepository(User);
 
     userPassword = '123456';
-    testUser = givenUserData({password: userPassword});
+    testUser = usersFixtures.givenUserData({password: userPassword});
     testUser.hashPassword();
 
     testUser = await userRepo.save(testUser);
@@ -29,13 +38,13 @@ describe('User Entity', function() {
 
   describe('generatePasswordToken()', function() {
     test('should generate valid jwt token', async () => {
-      const user: User = givenUserData({
+      const user: User = usersFixtures.givenUserData({
         firstName: 'João',
         lastName: 'das Neves',
       });
       await user.generatePasswordToken();
 
-      const tokenData = await jwtHelper.verify<Partial<User>>(
+      const tokenData = await jwtService.verify<Partial<User>>(
         user.passwordToken,
       );
 
@@ -45,11 +54,11 @@ describe('User Entity', function() {
     });
 
     test('should be triggered before inserting a new user', async () => {
-      let user = givenUserData();
+      let user = usersFixtures.givenUserData();
       user = await userRepo.save(user);
 
       expect(user.passwordToken).toBeTruthy();
-      expect(await jwtHelper.verify(user.passwordToken)).toBeTruthy();
+      expect(await jwtService.verify(user.passwordToken)).toBeTruthy();
     });
   });
 
@@ -62,7 +71,7 @@ describe('User Entity', function() {
       testUser.password = newPassword;
       testUser = await userRepo.save(testUser);
 
-      expect(await bcryptHelper.compare(newPassword, testUser.password)).toBe(
+      expect(await bcryptService.compare(newPassword, testUser.password)).toBe(
         true,
       );
 
@@ -74,7 +83,7 @@ describe('User Entity', function() {
   describe('checkPassword(password)', function() {
     test('should return true on the right password', async () => {
       const password = '123456';
-      const user = givenUserData({password});
+      const user = usersFixtures.givenUserData({password});
       user.password = password;
       await user.hashPassword();
 
@@ -83,7 +92,7 @@ describe('User Entity', function() {
 
     test('should return false on a wrong password', async () => {
       const password = '123456';
-      const user = givenUserData({password});
+      const user = usersFixtures.givenUserData({password});
       user.password = password;
       await user.hashPassword();
 

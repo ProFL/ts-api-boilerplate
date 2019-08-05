@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as bcrypt from 'bcrypt';
+import {Service} from 'typedi';
 
-class BcryptHelper {
+@Service()
+export default class BcryptService {
   async hash(data: any): Promise<string> {
     return new Promise((resolve, reject) => {
       bcrypt.hash(data, 10, (err, encrypted) => {
@@ -20,5 +22,3 @@ class BcryptHelper {
     });
   }
 }
-
-export default new BcryptHelper();

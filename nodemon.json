@@ -1,0 +1,4 @@
+{
+  "watch": ["src/**/*.ts", "__tests__/**/*.ts"],
+  "ext": "js,ts,json"
+}

@@ -1,32 +1,52 @@
-import {Connection, createConnection} from 'typeorm';
+import Container from 'typedi';
+import {
+  Connection,
+  ConnectionOptions,
+  createConnection,
+  useContainer,
+} from 'typeorm';
 import getEnvSecret from '../helpers/get-env-secret.helper';
 
 export default async function ormConfig(): Promise<Connection> {
   const nodeEnv = process.env.NODE_ENV;
 
+  useContainer(Container);
+
+  let connOpts: ConnectionOptions;
+
   if (nodeEnv === 'test') {
-    return createConnection({
+    connOpts = {
       type: 'sqlite',
       name: 'memory',
       database: ':memory:',
       entities: ['src/models/**/*.ts'],
       synchronize: true,
       logging: process.env.TYPEORM_LOGGING === 'true',
-    });
-  }
-
-  const typeormUrl = await getEnvSecret('TYPEORM_URL');
-  if (typeormUrl) {
-    return createConnection({
+    };
+  } else {
+    const baseOpts: ConnectionOptions = {
       type: 'postgres',
       url: await getEnvSecret('TYPEORM_URL'),
       synchronize: false,
       logging: (await getEnvSecret('TYPEORM_LOGGING')) === 'true',
-      entities: ['build/models/**/*.js'],
-      migrations: ['build/migrations/**/*.js'],
-      subscribers: ['build/subscribers/**/*.js'],
-    });
+    };
+
+    connOpts =
+      process.env.NODE_ENV === 'production'
+        ? {
+            ...baseOpts,
+            entities: ['build/models/**/*.js'],
+            migrations: ['build/migrations/**/*.js'],
+            subscribers: ['build/subscribers/**/*.js'],
+          }
+        : {
+            ...baseOpts,
+            synchronize: process.env.TYPEORM_SYNCHRONIZE === 'true',
+            entities: ['src/models/**/*.ts'],
+            migrations: ['src/migrations/**/*.ts'],
+            subscribers: ['src/subscribers/**/*.ts'],
+          };
   }
 
-  return createConnection();
+  return createConnection(connOpts);
 }

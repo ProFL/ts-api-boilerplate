@@ -1,7 +1,9 @@
 import * as jwt from 'jsonwebtoken';
-import getEnvSecret from './get-env-secret.helper';
+import {Service} from 'typedi';
+import getEnvSecret from '../helpers/get-env-secret.helper';
 
-class JwtHelper {
+@Service()
+export default class JwtService {
   private async jwtSecret(): Promise<string> {
     return getEnvSecret('SECRET_KEY');
   }
@@ -40,5 +42,3 @@ class JwtHelper {
     return jwt.decode(token, {complete: true, json: true}) as T;
   }
 }
-
-export default new JwtHelper();

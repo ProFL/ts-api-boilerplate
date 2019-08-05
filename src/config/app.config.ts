@@ -1,18 +1,34 @@
-import {Application} from 'express';
-import getControllers from '../controllers';
-import expressConfig from './express.config';
+import {useContainer} from 'class-validator';
+import * as Koa from 'koa';
+import * as path from 'path';
+import 'reflect-metadata';
+import {useKoaServer} from 'routing-controllers';
+import Container from 'typedi';
+import {CustomAppState} from '../helpers/interfaces/koa-context.interface';
+import authConfig from './auth.config';
+import constantsConfig from './constants.config';
+import koaConfig from './koa.config';
 import ormConfig from './orm.config';
-import passportConfig from './passport.config';
 
-export default async function appConfig(): Promise<Application> {
-  const app = await expressConfig();
-  const dbConnection = await ormConfig();
+export default async function appConfig(): Promise<Koa<CustomAppState, {}>> {
+  const app = await koaConfig();
 
-  app.set('dbConnection', dbConnection);
+  useContainer(Container); // class-validator
 
-  app.use(await passportConfig());
+  await ormConfig();
 
-  (await getControllers()).forEach(router => app.use(router));
+  await constantsConfig();
+
+  const controllersDir = path.resolve(__dirname, '..', 'controllers');
+  const {authorizationChecker, currentUserChecker} = authConfig();
+  useKoaServer(app, {
+    controllers: [
+      `${controllersDir}/**/*.controller.js`,
+      `${controllersDir}/**/*.controller.ts`,
+    ],
+    authorizationChecker,
+    currentUserChecker,
+  });
 
   return app;
 }
