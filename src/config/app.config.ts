@@ -28,6 +28,7 @@ export default async function appConfig(): Promise<Koa<CustomAppState, {}>> {
     ],
     authorizationChecker,
     currentUserChecker,
+    cors: true,
   });
 
   return app;

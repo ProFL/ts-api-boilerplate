@@ -23,7 +23,7 @@ export default function authConfig(): AuthHandlers {
   const authService: AuthService<User, string> = Container.get(JwtAuthService);
   const authorizationChecker: AuthorizationChecker = async (
     {context}: CustomAction,
-    roles,
+    roles: number | number[],
   ) => {
     // Authentication Cycle
     const user = await authService.isAuthenticated(context);

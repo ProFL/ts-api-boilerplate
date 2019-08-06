@@ -1,3 +1,4 @@
+import * as path from 'path';
 import Container from 'typedi';
 import {
   Connection,
@@ -31,21 +32,27 @@ export default async function ormConfig(): Promise<Connection> {
       logging: (await getEnvSecret('TYPEORM_LOGGING')) === 'true',
     };
 
-    connOpts =
-      process.env.NODE_ENV === 'production'
-        ? {
-            ...baseOpts,
-            entities: ['build/models/**/*.js'],
-            migrations: ['build/migrations/**/*.js'],
-            subscribers: ['build/subscribers/**/*.js'],
-          }
-        : {
-            ...baseOpts,
-            synchronize: process.env.TYPEORM_SYNCHRONIZE === 'true',
-            entities: ['src/models/**/*.ts'],
-            migrations: ['src/migrations/**/*.ts'],
-            subscribers: ['src/subscribers/**/*.ts'],
-          };
+    let rootDir: string;
+    let fileFormat: string;
+    let synchronize: boolean;
+
+    if (process.env.NODE_ENV === 'production') {
+      rootDir = 'build';
+      fileFormat = '*.js';
+      synchronize = false;
+    } else {
+      rootDir = 'src';
+      fileFormat = '*.ts';
+      synchronize = (await getEnvSecret('TYPEORM_SYNCHRONIZE')) === 'true';
+    }
+
+    connOpts = {
+      ...baseOpts,
+      synchronize,
+      entities: [path.join(rootDir, 'models', '**', fileFormat)],
+      migrations: [path.join(rootDir, 'migrations', '**', fileFormat)],
+      subscribers: [path.join(rootDir, 'subscribers', '**', fileFormat)],
+    };
   }
 
   return createConnection(connOpts);
