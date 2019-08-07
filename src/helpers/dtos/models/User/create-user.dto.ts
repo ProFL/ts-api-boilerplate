@@ -38,6 +38,7 @@ export class CreateUserDto implements Partial<User> {
   @IsConfirmationOf('password')
   passwordConfirmation: string;
 
+  @IsDefined()
   @ValidateNested()
   // @ts-ignore
   profile: InnerProfile;

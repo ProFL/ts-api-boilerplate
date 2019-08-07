@@ -1,64 +1,85 @@
-import {ValidationError, Validator, ValidatorOptions} from 'class-validator';
+import {ValidationError, Validator} from 'class-validator';
 import * as _ from 'lodash';
 import {
   Authorized,
   Body,
+  Delete,
   Get,
   HttpCode,
   JsonController,
+  MethodNotAllowedError,
   NotFoundError,
   Param,
   Patch,
   Post,
+  UseBefore,
 } from 'routing-controllers';
-import {Inject} from 'typedi';
 import {Repository} from 'typeorm';
 import {InjectRepository} from 'typeorm-typedi-extensions';
-import {CONSTANT_KEYS} from '../config/constants.config';
 import {CreateUserDto} from '../helpers/dtos/models/User/create-user.dto';
 import {UpdateUserDto} from '../helpers/dtos/models/User/update-user.dto';
+import {ValidateBody} from '../middlewares/validate-body.middleware';
+import {PermissionLevel} from '../models/permission-level.model';
+import {UserProfile} from '../models/user-profile.model';
 import {User} from '../models/user.model';
 
 @JsonController('/api/v1/users')
 export default class UsersController {
   constructor(
+    @InjectRepository(PermissionLevel)
+    private readonly permLevelRepo: Repository<PermissionLevel>,
     @InjectRepository(User) private readonly userRepo: Repository<User>,
-    @Inject(CONSTANT_KEYS.VALIDATOR_OPTIONS)
-    private readonly defaultValidationOptions: ValidatorOptions,
-    private readonly validator: Validator,
+    @InjectRepository(UserProfile)
+    private readonly userProfileRepo: Repository<UserProfile>,
   ) {}
 
   @Get('/')
   @Authorized()
   async index(): Promise<Partial<User>[]> {
     return (await this.userRepo.find()).map(user =>
-      _.omit(user, ['jwtService', 'bcryptService']),
+      _.pick(user, [
+        'id',
+        'email',
+        'profile',
+        'permissionLevel',
+      ] as (keyof User)[]),
     );
+  }
+
+  @Get('/:id')
+  @Authorized()
+  async show(@Param('id') id: number): Promise<User> {
+    throw new MethodNotAllowedError('TODO: Method not yet implemented');
   }
 
   @Post('/')
   @HttpCode(201)
+  @UseBefore(ValidateBody(CreateUserDto))
   async create(
     @Body({required: true})
-    user: CreateUserDto,
+    createUser: CreateUserDto,
   ): Promise<Partial<User> | void> {
-    await this.validator.validateOrReject(user, this.defaultValidationOptions);
+    const profile = await this.userProfileRepo.save(
+      await this.userProfileRepo.create({...createUser.profile}),
+    );
 
-    const createProps = [
-      'userName',
-      'firstName',
-      'lastName',
-      'email',
-      'isAdmin',
-    ];
+    const userData = this.userRepo.create({
+      ...createUser,
+      profile,
+      permissionLevel: await this.permLevelRepo.findOneOrFail(
+        createUser.permissionLevelId,
+      ),
+    });
 
     try {
-      return _.pick(
-        await this.userRepo.save(
-          this.userRepo.create(_.pick(user, createProps)),
-        ),
-        ['id', ...createProps],
-      );
+      const user = await this.userRepo.save(userData);
+
+      return _.pick(user, [
+        'id',
+        'email',
+        'profile',
+        'permissionLevel',
+      ] as (keyof User)[]);
     } catch (err) {
       if (err.name === 'QueryFailedError') {
         if (/duplicate key value/.test(err.message)) {
@@ -78,23 +99,19 @@ export default class UsersController {
           throw validationError;
         }
       }
+      console.error(err);
       throw err;
     }
   }
 
   @Patch('/:id')
+  @Authorized()
+  @UseBefore(ValidateBody(UpdateUserDto))
   async update(
     @Param('id') id: string,
     @Body({required: true})
     user: UpdateUserDto,
   ): Promise<Partial<User> | void> {
-    /*
-     * TODO: Fix edge case where if you try to update and user
-     * by sending the same e-mail as the current one it will deny
-     * on the Unique validation constraint.
-     */
-    await this.validator.validateOrReject(user, this.defaultValidationOptions);
-
     let dbUser: User;
     try {
       dbUser = await this.userRepo.findOneOrFail(id);
@@ -112,5 +129,11 @@ export default class UsersController {
       'jwtService',
       'bcryptService',
     ]);
+  }
+
+  @Delete('/:id')
+  @Authorized()
+  async destroy(@Param('id') id: number): Promise<User> {
+    throw new MethodNotAllowedError('TODO: Method not yet implemented');
   }
 }

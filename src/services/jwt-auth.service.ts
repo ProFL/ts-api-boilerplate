@@ -8,6 +8,11 @@ import {User} from '../models/user.model';
 import AuthService from './auth.service';
 import JwtService from './jwt.service';
 
+export type FullAuthTokenPayload = AuthTokenPayload & {
+  iat: number;
+  exp: number;
+};
+
 @Service('jwt.auth-service')
 export default class JwtAuthService implements AuthService<User, string> {
   constructor(private readonly jwtService: JwtService) {}
@@ -26,50 +31,69 @@ export default class JwtAuthService implements AuthService<User, string> {
     return match[1];
   }
 
-  private async validateToken(token: string): Promise<AuthTokenPayload> {
-    return this.jwtService.verify<AuthTokenPayload>(token);
+  private async getUserFromToken(token: string): Promise<User> {
+    const payload = await this.getTokenPayload(token);
+    const {id} = payload;
+    const user = await this.userRepo.findOneOrFail(id);
+    this.checkForUserChanges(user, payload);
+    return user;
   }
 
-  private async getUserFromToken(token: string): Promise<User> {
-    let id: string;
+  private checkForUserChanges(user: User, payload: FullAuthTokenPayload): void {
+    // updatedAt in ms vs iat in seconds, must convert iat to ms
+    if (user.updatedAt.getTime() > payload.iat * 1000) {
+      throw new UnauthorizedError('Token invalidated');
+    }
+  }
 
+  private async getTokenPayload(token: string): Promise<FullAuthTokenPayload> {
     try {
-      ({id} = await this.validateToken(token));
+      return await this.jwtService.verify(token);
     } catch (err) {
       throw new UnauthorizedError('Invalid authentication token');
     }
+  }
 
-    return this.userRepo.findOneOrFail(id);
+  private async getUserByEmail(email: string): Promise<User> {
+    try {
+      return await this.userRepo.findOneOrFail({where: {email}});
+    } catch (err) {
+      throw new BadRequestError('E-mail not registered');
+    }
+  }
+
+  private async checkUserPassword(user: User, password: string): Promise<void> {
+    if (!(await user.checkPassword(password))) {
+      throw new BadRequestError('Invalid password');
+    }
+  }
+
+  private generateToken(user: User): Promise<string> {
+    const tokenPayload: AuthTokenPayload = {
+      id: user.id,
+      profile: {
+        firstName: user.profile.firstName,
+        lastName: user.profile.lastName,
+      },
+      permissionLevel: user.permissionLevel.id,
+    };
+    return this.jwtService.sign(tokenPayload, '30d');
   }
 
   async isAuthenticated(context: Context): Promise<User> {
     const authorizationHeader = context.request.headers.authorization;
     const token = this.getTokenFromHeader(authorizationHeader);
-
     return this.getUserFromToken(token);
   }
 
   async login(email: string, password: string): Promise<string> {
-    let user: User;
-
-    try {
-      user = await this.userRepo.findOneOrFail({where: {email}});
-    } catch (err) {
-      throw new BadRequestError('E-mail not registered');
-    }
-
-    if (!(await user.checkPassword(password))) {
-      throw new BadRequestError('Invalid password');
-    }
-
-    return this.jwtService.sign({id: user.id}, '30d');
+    const user = await this.getUserByEmail(email);
+    await this.checkUserPassword(user, password);
+    return this.generateToken(user);
   }
 
   async logout(context: KoaContext): Promise<void> {
-    const token = this.getTokenFromHeader(context.headers.authorization);
-
-    // TODO: Logout implementation
-
-    console.error(`> Peding invalidation of ${token}`);
+    // Trigger change on updated at to invalidate all tokens issued before this date
+    this.userRepo.save(context.state.user);
   }
 }

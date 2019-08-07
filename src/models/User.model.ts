@@ -84,10 +84,12 @@ export class User {
       // eslint-disable-next-line no-empty
     } catch (err) {}
 
-    this.password = await this.bcryptService.hash(this.password);
+    if (this.password)
+      this.password = await this.bcryptService.hash(this.password);
   }
 
   async checkPassword(password: string): Promise<boolean> {
+    if (!this.password) return false;
     return this.bcryptService.compare(password, this.password);
   }
 }
