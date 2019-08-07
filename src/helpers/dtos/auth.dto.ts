@@ -1,5 +1,4 @@
-import {IsDefined, IsEmail, Length, IsString} from 'class-validator';
-import {IsConfirmationOf} from '../decorators/is-confirmation-of.decorator';
+import {IsDefined, IsEmail, IsString, Length} from 'class-validator';
 
 export class AuthDto {
   @IsDefined()
@@ -11,8 +10,4 @@ export class AuthDto {
   @IsString()
   @Length(6, 72)
   password: string;
-
-  @IsDefined()
-  @IsConfirmationOf('password')
-  passwordConfirmation: string;
 }

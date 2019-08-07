@@ -1,5 +1,5 @@
 import {ParameterizedContext} from 'koa';
-import {User} from '../../models/User.model';
+import {User} from '../../models/user.model';
 
 export interface CustomAppState {
   user?: User;

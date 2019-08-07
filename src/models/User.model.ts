@@ -1,12 +1,3 @@
-import {
-  IsAlphanumeric,
-  IsBoolean,
-  IsDefined,
-  IsEmail,
-  IsString,
-  Length,
-  MinLength,
-} from 'class-validator';
 import Container from 'typedi';
 import {
   BeforeInsert,
@@ -14,19 +5,17 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-  getRepository,
+  getConnection,
 } from 'typeorm';
 import BcryptService from '../services/bcrypt.service';
 import JwtService from '../services/jwt.service';
-import {IsUnique} from '../helpers/decorators/is-unique.decorator';
-
-export enum UserValidationGroups {
-  DEFAULT = 'DEFAULT',
-  CREATE = 'CREATE',
-  UPDATE = 'UPDATE',
-}
+import {UserProfile} from './user-profile.model';
+import {PermissionLevel} from './permission-level.model';
 
 @Entity()
 export class User {
@@ -34,38 +23,27 @@ export class User {
   id: string;
 
   @Column({nullable: false, unique: true})
-  @IsString()
-  @IsAlphanumeric()
-  @MinLength(2)
-  @IsUnique(User)
-  userName: string;
-
-  @Column({nullable: false})
-  @IsString()
-  @MinLength(2)
-  firstName: string;
-
-  @Column({nullable: false})
-  @IsString()
-  @MinLength(2)
-  lastName: string;
-
-  @Column({nullable: false, unique: true})
-  @IsEmail()
-  @IsUnique(User)
   email: string;
 
   @Column({nullable: true})
-  @Length(6, 72)
   password: string;
 
-  @Column()
-  @IsString()
+  @Column({nullable: true})
   passwordToken: string;
 
-  @Column({nullable: false, default: false})
-  @IsBoolean()
-  isAdmin: boolean;
+  @OneToOne(type => UserProfile, {
+    nullable: false,
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn()
+  profile: UserProfile;
+
+  @ManyToOne(
+    type => PermissionLevel,
+    permissionLevel => permissionLevel.users,
+    {nullable: false},
+  )
+  permissionLevel: PermissionLevel;
 
   @CreateDateColumn()
   createdAt: Date;
@@ -84,18 +62,28 @@ export class User {
 
   @BeforeInsert()
   async generatePasswordToken(): Promise<void> {
-    this.passwordToken = (await this.jwtService.sign(
+    this.passwordToken = await this.jwtService.sign(
       {
         id: this.id,
-        firstName: this.firstName,
-        lastName: this.lastName,
+        profile: await this.profile,
       },
       '1d',
-    )) as string;
+    );
   }
 
+  @BeforeInsert()
   @BeforeUpdate()
   async hashPassword(): Promise<void> {
+    try {
+      const user = await getConnection()
+        .getRepository(User)
+        .findOneOrFail(this.id);
+      if (this.password === user.password) {
+        return;
+      }
+      // eslint-disable-next-line no-empty
+    } catch (err) {}
+
     this.password = await this.bcryptService.hash(this.password);
   }
 

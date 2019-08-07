@@ -18,7 +18,6 @@ export default async function ormConfig(): Promise<Connection> {
   if (nodeEnv === 'test') {
     connOpts = {
       type: 'sqlite',
-      name: 'memory',
       database: ':memory:',
       entities: ['src/models/**/*.ts'],
       synchronize: true,
@@ -55,5 +54,7 @@ export default async function ormConfig(): Promise<Connection> {
     };
   }
 
-  return createConnection(connOpts);
+  const defaultConn = await createConnection(connOpts);
+
+  return defaultConn;
 }

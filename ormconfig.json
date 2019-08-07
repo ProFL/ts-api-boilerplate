@@ -5,7 +5,7 @@
   "username": "postgres",
   "password": "postgres",
   "database": "tsapi_boilerplate",
-  "synchronize": true,
+  "synchronize": false,
   "logging": true,
   "entities": ["build/models/**/*.js"],
   "migrations": ["build/migrations/**/*.js"],

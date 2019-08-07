@@ -1,34 +1,31 @@
 import Container from 'typedi';
 import {Connection, Repository} from 'typeorm';
+import * as uuid from 'uuid/v4';
 import ormConfig from '../../src/config/orm.config';
-import {User} from '../../src/models/User.model';
+import {AuthTokenPayload} from '../../src/helpers/interfaces/auth-token-payload.interface';
+import {User} from '../../src/models/user.model';
 import BcryptService from '../../src/services/bcrypt.service';
 import JwtService from '../../src/services/jwt.service';
-import UsersFixtures from '../fixtures/models/users.fixture';
+import UserFixtures from '../fixtures/models/user.fixture';
 
-describe('User Entity', function() {
-  let usersFixtures: UsersFixtures;
+describe('User Entity', () => {
   let bcryptService: BcryptService;
   let jwtService: JwtService;
+
   let ormConnection: Connection;
   let userRepo: Repository<User>;
   let testUser: User;
-  let userPassword: string;
+  const userPassword = '123456';
 
   beforeAll(async () => {
     ormConnection = await ormConfig();
 
-    usersFixtures = Container.get(UsersFixtures);
     bcryptService = Container.get(BcryptService);
     jwtService = Container.get(JwtService);
 
     userRepo = ormConnection.getRepository(User);
 
-    userPassword = '123456';
-    testUser = usersFixtures.givenUserData({password: userPassword});
-    testUser.hashPassword();
-
-    testUser = await userRepo.save(testUser);
+    testUser = await UserFixtures.givenTestUser({password: userPassword});
   });
 
   afterAll(async () => {
@@ -36,33 +33,34 @@ describe('User Entity', function() {
     await ormConnection.close();
   });
 
-  describe('generatePasswordToken()', function() {
+  describe('generatePasswordToken()', () => {
     test('should generate valid jwt token', async () => {
-      const user: User = usersFixtures.givenUserData({
-        firstName: 'João',
-        lastName: 'das Neves',
+      const user: User = await UserFixtures.givenUserData({
+        profile: {
+          id: uuid(),
+          firstName: 'João',
+          lastName: 'das Neves',
+        },
       });
       await user.generatePasswordToken();
 
-      const tokenData = await jwtService.verify<Partial<User>>(
+      const tokenData = await jwtService.verify<AuthTokenPayload>(
         user.passwordToken,
       );
 
       expect(tokenData.id).toEqual(user.id);
-      expect(tokenData.firstName).toEqual(user.firstName);
-      expect(tokenData.lastName).toEqual(user.lastName);
+      expect(tokenData.profile).toEqual(user.profile);
     });
 
     test('should be triggered before inserting a new user', async () => {
-      let user = usersFixtures.givenUserData();
-      user = await userRepo.save(user);
+      const user = await UserFixtures.givenTestUser();
 
       expect(user.passwordToken).toBeTruthy();
       expect(await jwtService.verify(user.passwordToken)).toBeTruthy();
     });
   });
 
-  describe('hashPassword()', function() {
+  describe('hashPassword()', () => {
     test('should be triggered before a user is updated', async () => {
       const newPassword = userPassword
         .split('')
@@ -80,10 +78,10 @@ describe('User Entity', function() {
     });
   });
 
-  describe('checkPassword(password)', function() {
+  describe('checkPassword(password)', () => {
     test('should return true on the right password', async () => {
       const password = '123456';
-      const user = usersFixtures.givenUserData({password});
+      const user = await UserFixtures.givenUserData({password});
       user.password = password;
       await user.hashPassword();
 
@@ -92,7 +90,7 @@ describe('User Entity', function() {
 
     test('should return false on a wrong password', async () => {
       const password = '123456';
-      const user = usersFixtures.givenUserData({password});
+      const user = await UserFixtures.givenUserData({password});
       user.password = password;
       await user.hashPassword();
 

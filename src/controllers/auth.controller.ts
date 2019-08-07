@@ -1,5 +1,3 @@
-import {Validator, ValidatorOptions} from 'class-validator';
-import * as _ from 'lodash';
 import {
   BadRequestError,
   Body,
@@ -9,38 +7,30 @@ import {
   JsonController,
   NotFoundError,
   Post,
+  UseBefore,
+  Authorized,
 } from 'routing-controllers';
-import {Inject} from 'typedi';
 import {Repository} from 'typeorm';
 import {InjectRepository} from 'typeorm-typedi-extensions';
-import {CONSTANT_KEYS} from '../config/constants.config';
 import {AuthDto} from '../helpers/dtos/auth.dto';
 import {KoaContext} from '../helpers/interfaces/koa-context.interface';
-import {User} from '../models/User.model';
+import {ValidateBody} from '../middlewares/validate-body.middleware';
+import {UserProfile} from '../models/user-profile.model';
+import {User} from '../models/user.model';
 import JwtAuthService from '../services/jwt-auth.service';
-
-export interface TokenResponse {
-  user: Partial<User>;
-  token: string;
-}
 
 @JsonController('/api/v1/auth')
 export default class AuthController {
   constructor(
-    private readonly validator: Validator,
     private readonly authService: JwtAuthService,
-    @Inject(CONSTANT_KEYS.VALIDATOR_OPTIONS)
-    private readonly defaultValidatorOptions: ValidatorOptions,
     @InjectRepository(User) private readonly userRepo: Repository<User>,
   ) {}
 
-  @Post('/login')
+  @Post('/')
+  @UseBefore(ValidateBody(AuthDto))
   async login(
-    @Body({required: true})
-    authInfo: AuthDto,
-  ): Promise<TokenResponse | void> {
-    this.validator.validateOrReject(authInfo, this.defaultValidatorOptions);
-
+    @Body({required: true}) authInfo: AuthDto,
+  ): Promise<{profile: UserProfile; token: string}> {
     let user: User;
 
     try {
@@ -66,12 +56,13 @@ export default class AuthController {
     );
 
     return {
-      user: _.pick(user, ['userName', 'firstName', 'lastName', 'isAdmin']),
       token,
+      profile: await user.profile,
     };
   }
 
-  @Delete('/logout')
+  @Delete('/')
+  @Authorized()
   async logout(@Ctx() context: KoaContext): Promise<void> {
     return this.authService.logout(context);
   }

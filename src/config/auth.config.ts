@@ -4,7 +4,7 @@ import {AuthorizationChecker} from 'routing-controllers/AuthorizationChecker';
 import {CurrentUserChecker} from 'routing-controllers/CurrentUserChecker';
 import Container from 'typedi';
 import {KoaContext} from '../helpers/interfaces/koa-context.interface';
-import {User} from '../models/User.model';
+import {User} from '../models/user.model';
 import AuthService from '../services/auth.service';
 import JwtAuthService from '../services/jwt-auth.service';
 
@@ -26,10 +26,8 @@ export default function authConfig(): AuthHandlers {
     roles: number | number[],
   ) => {
     // Authentication Cycle
-    const user = await authService.isAuthenticated(context);
-
     // eslint-disable-next-line no-param-reassign
-    context.state.user = user;
+    context.state.user = await authService.isAuthenticated(context);
 
     // Authorization Cycle
     // TODO: Implement and validate user roles

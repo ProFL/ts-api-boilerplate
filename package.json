@@ -4,6 +4,7 @@
     "bcrypt": "^3.0.6",
     "class-transformer": "^0.2.3",
     "class-validator": "^0.9.1",
+    "cross-env": "^5.2.0",
     "http-errors": "^1.7.3",
     "jsonwebtoken": "^8.5.1",
     "kcors": "^2.2.2",
@@ -54,17 +55,26 @@
     "typescript": "3.3.3333"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "predocker:dev": "yarn install",
-    "docker:dev": "yarn start:dev",
-    "lint": "eslint --ext .js,.ts .",
-    "postlint": "prettier --write ./{src,__tests__}/**/*.ts",
-    "orm": "typeorm",
     "start": "node build/index.js",
     "start:dev": "nodemon --exec ts-node -r dotenv/config src/index.ts",
+    "predocker:dev": "yarn install",
+    "docker:dev": "yarn start:dev",
+    "build": "tsc -p tsconfig.build.json",
+    "build:clean": "rm -rf build && npm run build",
+    "orm": "typeorm -f ./ormconfig.json",
+    "premigration:generate": "npm run build:clean",
+    "migration:generate": "npm run orm migration:generate",
+    "premigration:run": "npm run build:clean",
+    "migration:run": "npm run orm migration:run",
+    "premigration:show": "npm run build:clean",
+    "migration:show": "npm run orm migration:show",
+    "premigration:revert": "npm run build:clean",
+    "migration:revert": "npm run orm migration:revert",
+    "lint": "eslint --ext .js,.ts .",
+    "postlint": "prettier --write ./{src,__tests__}/**/*.ts",
     "pretest": "npm run lint",
-    "test": "jest --setupFiles dotenv/config",
-    "test:cov": "jest --setupFiles dotenv/config --coverage",
-    "test:watch": "nodemon --exec jest --setupFiles dotenv/config"
+    "test": "cross-env NODE_ENV=test jest --setupFiles dotenv/config",
+    "test:cov": "cross-env NODE_ENV=test jest --setupFiles dotenv/config --coverage",
+    "test:watch": "cross-env NODE_ENV=test nodemon --exec jest --setupFiles dotenv/config"
   }
 }

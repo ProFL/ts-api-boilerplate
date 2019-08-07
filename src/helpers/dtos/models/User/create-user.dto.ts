@@ -1,22 +1,19 @@
 import {
-  IsAlphanumeric,
-  IsBoolean,
   IsDefined,
   IsEmail,
+  IsEnum,
   IsString,
+  Length,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
-import {User} from '../../../../models/User.model';
+import {UserProfile} from '../../../../models/user-profile.model';
+import {User} from '../../../../models/user.model';
+import {IsConfirmationOf} from '../../../decorators/is-confirmation-of.decorator';
 import {IsUnique} from '../../../decorators/is-unique.decorator';
+import {PermissionLevels} from '../../../enums/permission-levels.enum';
 
-export class CreateUserDto implements Partial<User> {
-  @IsDefined()
-  @IsString()
-  @IsAlphanumeric()
-  @MinLength(2)
-  @IsUnique(User)
-  userName: string;
-
+class InnerProfile implements Partial<UserProfile> {
   @IsDefined()
   @IsString()
   @MinLength(2)
@@ -26,13 +23,26 @@ export class CreateUserDto implements Partial<User> {
   @IsString()
   @MinLength(2)
   lastName: string;
+}
 
+export class CreateUserDto implements Partial<User> {
   @IsDefined()
   @IsEmail()
   @IsUnique(User)
   email: string;
 
+  @IsString()
+  @Length(6, 72)
+  password: string;
+
+  @IsConfirmationOf('password')
+  passwordConfirmation: string;
+
+  @ValidateNested()
+  // @ts-ignore
+  profile: InnerProfile;
+
   @IsDefined()
-  @IsBoolean()
-  isAdmin: boolean;
+  @IsEnum(PermissionLevels)
+  permissionLevelId: number;
 }

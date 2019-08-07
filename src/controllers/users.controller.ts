@@ -17,7 +17,7 @@ import {InjectRepository} from 'typeorm-typedi-extensions';
 import {CONSTANT_KEYS} from '../config/constants.config';
 import {CreateUserDto} from '../helpers/dtos/models/User/create-user.dto';
 import {UpdateUserDto} from '../helpers/dtos/models/User/update-user.dto';
-import {User} from '../models/User.model';
+import {User} from '../models/user.model';
 
 @JsonController('/api/v1/users')
 export default class UsersController {
