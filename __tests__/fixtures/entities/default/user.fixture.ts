@@ -1,8 +1,8 @@
 import {DeepPartial, getConnection, Repository} from 'typeorm';
 import * as uuid from 'uuid/v4';
-import {PermissionLevels} from '../../../src/helpers/enums/permission-levels.enum';
-import {UserProfile} from '../../../src/models/user-profile.model';
-import {User} from '../../../src/models/user.model';
+import {PermissionLevels} from '../../../../src/helpers/enums/permission-levels.enum';
+import {UserProfile} from '../../../../src/entities/default/user-profile.model';
+import {User} from '../../../../src/entities/default/user.model';
 import PermissionLevelFixture from './permission-level.fixture';
 
 export default class UserFixtures {

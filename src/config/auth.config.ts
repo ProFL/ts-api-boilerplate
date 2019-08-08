@@ -4,7 +4,7 @@ import {AuthorizationChecker} from 'routing-controllers/AuthorizationChecker';
 import {CurrentUserChecker} from 'routing-controllers/CurrentUserChecker';
 import Container from 'typedi';
 import {KoaContext} from '../helpers/interfaces/koa-context.interface';
-import {User} from '../models/user.model';
+import {User} from '../entities/default/user.model';
 import AuthService from '../services/auth.service';
 import JwtAuthService from '../services/jwt-auth.service';
 

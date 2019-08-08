@@ -12,8 +12,8 @@ import {
   UpdateDateColumn,
   getConnection,
 } from 'typeorm';
-import BcryptService from '../services/bcrypt.service';
-import JwtService from '../services/jwt.service';
+import BcryptService from '../../services/bcrypt.service';
+import JwtService from '../../services/jwt.service';
 import {UserProfile} from './user-profile.model';
 import {PermissionLevel} from './permission-level.model';
 

@@ -4,7 +4,7 @@ import {Service} from 'typedi';
 import {getRepository, Repository} from 'typeorm';
 import {AuthTokenPayload} from '../helpers/interfaces/auth-token-payload.interface';
 import {KoaContext} from '../helpers/interfaces/koa-context.interface';
-import {User} from '../models/user.model';
+import {User} from '../entities/default/user.model';
 import AuthService from './auth.service';
 import JwtService from './jwt.service';
 

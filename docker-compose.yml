@@ -12,6 +12,7 @@ services:
     environment:
       - NODE_ENV=production
       - TYPEORM_LOGGING=false
+      - TYPEORM_SYNCHRONIZE=false
     networks:
       - net
 

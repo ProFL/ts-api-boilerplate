@@ -1,12 +1,12 @@
 import Container from 'typedi';
 import {Connection, Repository} from 'typeorm';
 import * as uuid from 'uuid/v4';
-import ormConfig from '../../src/config/orm.config';
-import {AuthTokenPayload} from '../../src/helpers/interfaces/auth-token-payload.interface';
-import {User} from '../../src/models/user.model';
-import BcryptService from '../../src/services/bcrypt.service';
-import JwtService from '../../src/services/jwt.service';
-import UserFixtures from '../fixtures/models/user.fixture';
+import ormConfig from '../../../src/config/orm.config';
+import {AuthTokenPayload} from '../../../src/helpers/interfaces/auth-token-payload.interface';
+import {User} from '../../../src/entities/default/user.model';
+import BcryptService from '../../../src/services/bcrypt.service';
+import JwtService from '../../../src/services/jwt.service';
+import UserFixtures from '../../fixtures/entities/default/user.fixture';
 
 describe('User Entity', () => {
   let bcryptService: BcryptService;
@@ -18,7 +18,7 @@ describe('User Entity', () => {
   const userPassword = '123456';
 
   beforeAll(async () => {
-    ormConnection = await ormConfig();
+    ({default: ormConnection} = await ormConfig());
 
     bcryptService = Container.get(BcryptService);
     jwtService = Container.get(JwtService);

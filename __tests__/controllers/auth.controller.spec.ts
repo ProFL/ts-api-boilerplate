@@ -1,6 +1,6 @@
 import appConfig from '../../src/config/app.config';
-import {User} from '../../src/models/user.model';
-import UserFixtures from '../fixtures/models/user.fixture';
+import {User} from '../../src/entities/default/user.model';
+import UserFixtures from '../fixtures/entities/default/user.fixture';
 
 import supertest = require('supertest');
 

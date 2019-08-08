@@ -8,53 +8,61 @@ import {
 } from 'typeorm';
 import getEnvSecret from '../helpers/get-env-secret.helper';
 
-export default async function ormConfig(): Promise<Connection> {
-  const nodeEnv = process.env.NODE_ENV;
+export interface DatabaseConnections {
+  default: Connection;
+}
+
+export default async function ormConfig(): Promise<DatabaseConnections> {
+  const nodeEnv = await getEnvSecret('NODE_ENV');
 
   useContainer(Container);
 
-  let connOpts: ConnectionOptions;
+  let defaultConnOpts: ConnectionOptions;
+  const fileExtension = nodeEnv === 'production' ? '*.js' : '*.ts';
+
+  const rootDir = path.resolve(__dirname, '..');
+  const entitiesBaseDir = path.join(rootDir, 'entities');
+  const migrationsBaseDir = path.join(rootDir, 'migrations');
+  const subscribersBaseDir = path.join(rootDir, 'subscribers');
+
+  const defaultConfigs = {
+    default: {
+      entities: [path.join(entitiesBaseDir, 'default', '**', fileExtension)],
+      migrations: [
+        path.join(migrationsBaseDir, 'default', '**', fileExtension),
+      ],
+      subscribers: [
+        path.join(subscribersBaseDir, 'default', '**', fileExtension),
+      ],
+    },
+  };
 
   if (nodeEnv === 'test') {
-    connOpts = {
+    defaultConnOpts = {
       type: 'sqlite',
       database: ':memory:',
-      entities: ['src/models/**/*.ts'],
       synchronize: true,
       logging: process.env.TYPEORM_LOGGING === 'true',
+      ...defaultConfigs.default,
     };
   } else {
-    const baseOpts: ConnectionOptions = {
+    defaultConnOpts = {
       type: 'postgres',
-      url: await getEnvSecret('TYPEORM_URL'),
-      synchronize: false,
+      username: await getEnvSecret('TYPEORM_USERNAME'),
+      password: await getEnvSecret('TYPEORM_PASSWORD'),
+      host: await getEnvSecret('TYPEORM_HOST'),
+      database: 'tsapi_boilerplate',
+      synchronize:
+        nodeEnv !== 'production' &&
+        /true/i.test(await getEnvSecret('TYPEORM_SYNCHRONIZE')),
       logging: (await getEnvSecret('TYPEORM_LOGGING')) === 'true',
-    };
-
-    let rootDir: string;
-    let fileFormat: string;
-    let synchronize: boolean;
-
-    if (process.env.NODE_ENV === 'production') {
-      rootDir = 'build';
-      fileFormat = '*.js';
-      synchronize = false;
-    } else {
-      rootDir = 'src';
-      fileFormat = '*.ts';
-      synchronize = (await getEnvSecret('TYPEORM_SYNCHRONIZE')) === 'true';
-    }
-
-    connOpts = {
-      ...baseOpts,
-      synchronize,
-      entities: [path.join(rootDir, 'models', '**', fileFormat)],
-      migrations: [path.join(rootDir, 'migrations', '**', fileFormat)],
-      subscribers: [path.join(rootDir, 'subscribers', '**', fileFormat)],
+      ...defaultConfigs.default,
     };
   }
 
-  const defaultConn = await createConnection(connOpts);
+  const defaultConn = await createConnection(defaultConnOpts);
 
-  return defaultConn;
+  return {
+    default: defaultConn,
+  };
 }

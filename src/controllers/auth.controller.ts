@@ -15,8 +15,8 @@ import {InjectRepository} from 'typeorm-typedi-extensions';
 import {AuthDto} from '../helpers/dtos/auth.dto';
 import {KoaContext} from '../helpers/interfaces/koa-context.interface';
 import {ValidateBody} from '../middlewares/validate-body.middleware';
-import {UserProfile} from '../models/user-profile.model';
-import {User} from '../models/user.model';
+import {UserProfile} from '../entities/default/user-profile.model';
+import {User} from '../entities/default/user.model';
 import JwtAuthService from '../services/jwt-auth.service';
 
 @JsonController('/api/v1/auth')

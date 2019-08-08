@@ -1,18 +1,17 @@
 import {
   IsDefined,
   IsEmail,
-  IsEnum,
+  IsIn,
   IsString,
   Length,
   MinLength,
   ValidateNested,
-  IsIn,
 } from 'class-validator';
-import {UserProfile} from '../../../../models/user-profile.model';
-import {User} from '../../../../models/user.model';
-import {IsConfirmationOf} from '../../../decorators/is-confirmation-of.decorator';
-import {IsUnique} from '../../../decorators/is-unique.decorator';
-import {PermissionLevels} from '../../../enums/permission-levels.enum';
+import {UserProfile} from '../../../entities/default/user-profile.model';
+import {User} from '../../../entities/default/user.model';
+import {IsConfirmationOf} from '../../decorators/is-confirmation-of.decorator';
+import {IsUnique} from '../../decorators/is-unique.decorator';
+import {PermissionLevels} from '../../enums/permission-levels.enum';
 
 class InnerProfile implements Partial<UserProfile> {
   @IsDefined()

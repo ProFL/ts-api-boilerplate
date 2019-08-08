@@ -3,8 +3,14 @@ version: '3.7'
 secrets:
   SECRET_KEY:
     file: ./docker/secrets/SECRET_KEY
-  TYPEORM_URL:
-    file: ./docker/secrets/TYPEORM_URL
+  TYPEORM_USERNAME:
+    file: ./docker/secrets/TYPEORM_USERNAME
+  TYPEORM_PASSWORD:
+    file: ./docker/secrets/TYPEORM_PASSWORD
+  TYPEORM_HOST:
+    file: ./docker/secrets/TYPEORM_HOST
+  TYPEORM_DATABASE:
+    file: ./docker/secrets/TYPEORM_DATABASE
   POSTGRES_PASSWORD:
     file: ./docker/secrets/POSTGRES_PASSWORD
 
@@ -14,8 +20,11 @@ networks:
 services:
   api:
     secrets:
-      - TYPEORM_URL
       - SECRET_KEY
+      - TYPEORM_USERNAME
+      - TYPEORM_PASSWORD
+      - TYPEORM_HOST
+      - TYPEORM_DATABASE
 
   db:
     image: postgres:10-alpine

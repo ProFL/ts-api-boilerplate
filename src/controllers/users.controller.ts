@@ -16,12 +16,12 @@ import {
 } from 'routing-controllers';
 import {Repository} from 'typeorm';
 import {InjectRepository} from 'typeorm-typedi-extensions';
-import {CreateUserDto} from '../helpers/dtos/models/user/create-user.dto';
-import {UpdateUserDto} from '../helpers/dtos/models/user/update-user.dto';
+import {PermissionLevel} from '../entities/default/permission-level.model';
+import {UserProfile} from '../entities/default/user-profile.model';
+import {User} from '../entities/default/user.model';
+import {CreateUserDto} from '../helpers/dtos/user/create-user.dto';
+import {UpdateUserDto} from '../helpers/dtos/user/update-user.dto';
 import {ValidateBody} from '../middlewares/validate-body.middleware';
-import {PermissionLevel} from '../models/permission-level.model';
-import {UserProfile} from '../models/user-profile.model';
-import {User} from '../models/user.model';
 
 @JsonController('/api/v1/users')
 export default class UsersController {

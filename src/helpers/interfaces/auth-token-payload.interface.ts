@@ -1,4 +1,4 @@
-import {UserProfile} from '../../models/user-profile.model';
+import {UserProfile} from '../../entities/default/user-profile.model';
 import {PermissionLevels} from '../enums/permission-levels.enum';
 
 export interface AuthTokenPayload {

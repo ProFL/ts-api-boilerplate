@@ -18,15 +18,12 @@ RUN yarn install
 
 COPY --chown=node . .
 
-RUN export NODE_ENV=test && \
-  export SECRET_KEY=test && \
-  yarn test:cov && \
-  yarn build
+RUN yarn build
 
 FROM base
 
 COPY --from=build /home/node/app/build ./
 
-ENV NODE_ENV=production SECRET_KEY=r3pl4c3_m3
+ENV NODE_ENV=production
 
 CMD [ "yarn", "start" ]

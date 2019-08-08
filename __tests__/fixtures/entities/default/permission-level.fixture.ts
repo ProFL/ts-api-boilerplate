@@ -1,6 +1,6 @@
 import {getConnection, Repository} from 'typeorm';
-import {PermissionLevels} from '../../../src/helpers/enums/permission-levels.enum';
-import {PermissionLevel} from '../../../src/models/permission-level.model';
+import {PermissionLevels} from '../../../../src/helpers/enums/permission-levels.enum';
+import {PermissionLevel} from '../../../../src/entities/default/permission-level.model';
 
 export default class PermissionLevelFixture {
   private static get permLevelRepo(): Repository<PermissionLevel> {
