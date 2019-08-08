@@ -18,6 +18,7 @@
     {
       "files": ["**/*.spec.ts", "**/*.fixture.ts"],
       "rules": {
+        "no-console": "off",
         "func-names": "warn",
         "import/no-extraneous-dependencies": "off",
         "@typescript-eslint/explicit-function-return-type": "off"
@@ -51,7 +52,6 @@
     "sourceType": "module"
   },
   "rules": {
-    "no-console": "warn",
     "no-empty-function": ["error", {"allow": ["constructors"]}],
     "class-methods-use-this": "off",
     "import/prefer-default-export": "off",

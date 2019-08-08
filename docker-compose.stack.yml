@@ -3,6 +3,8 @@ version: '3.7'
 secrets:
   SECRET_KEY:
     file: ./docker/secrets/SECRET_KEY
+  SMTP_URL:
+    file: ./docker/secrets/SMTP_URL
   TYPEORM_USERNAME:
     file: ./docker/secrets/TYPEORM_USERNAME
   TYPEORM_PASSWORD:
@@ -21,6 +23,7 @@ services:
   api:
     secrets:
       - SECRET_KEY
+      - SMTP_URL
       - TYPEORM_USERNAME
       - TYPEORM_PASSWORD
       - TYPEORM_HOST

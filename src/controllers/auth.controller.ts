@@ -1,4 +1,5 @@
 import {
+  Authorized,
   BadRequestError,
   Body,
   Ctx,
@@ -8,15 +9,17 @@ import {
   NotFoundError,
   Post,
   UseBefore,
-  Authorized,
 } from 'routing-controllers';
+import {Inject} from 'typedi';
 import {Repository} from 'typeorm';
 import {InjectRepository} from 'typeorm-typedi-extensions';
-import {AuthDto} from '../helpers/dtos/auth.dto';
-import {KoaContext} from '../helpers/interfaces/koa-context.interface';
-import {ValidateBody} from '../middlewares/validate-body.middleware';
+import {Logger} from 'winston';
 import {UserProfile} from '../entities/default/user-profile.model';
 import {User} from '../entities/default/user.model';
+import {AuthDto} from '../helpers/dtos/auth.dto';
+import {CONSTANT_KEYS} from '../helpers/enums/constants.enum';
+import {KoaContext} from '../helpers/interfaces/koa-context.interface';
+import {ValidateBody} from '../middlewares/validate-body.middleware';
 import JwtAuthService from '../services/jwt-auth.service';
 
 @JsonController('/api/v1/auth')
@@ -24,6 +27,7 @@ export default class AuthController {
   constructor(
     private readonly authService: JwtAuthService,
     @InjectRepository(User) private readonly userRepo: Repository<User>,
+    @Inject(CONSTANT_KEYS.LOGGER) private readonly logger: Logger,
   ) {}
 
   @Post('/')
@@ -41,7 +45,7 @@ export default class AuthController {
       if (err.name === 'EntityNotFound') {
         throw new NotFoundError('User not found');
       } else {
-        console.error(err);
+        this.logger.error(err);
         throw new InternalServerError('Failed to fetch user data');
       }
     }

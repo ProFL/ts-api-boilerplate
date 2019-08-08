@@ -14,13 +14,16 @@ import {
   Post,
   UseBefore,
 } from 'routing-controllers';
+import {Inject} from 'typedi';
 import {Repository} from 'typeorm';
 import {InjectRepository} from 'typeorm-typedi-extensions';
+import {Logger} from 'winston';
 import {PermissionLevel} from '../entities/default/permission-level.model';
 import {UserProfile} from '../entities/default/user-profile.model';
 import {User} from '../entities/default/user.model';
 import {CreateUserDto} from '../helpers/dtos/user/create-user.dto';
 import {UpdateUserDto} from '../helpers/dtos/user/update-user.dto';
+import {CONSTANT_KEYS} from '../helpers/enums/constants.enum';
 import {ValidateBody} from '../middlewares/validate-body.middleware';
 
 @JsonController('/api/v1/users')
@@ -31,6 +34,7 @@ export default class UsersController {
     @InjectRepository(User) private readonly userRepo: Repository<User>,
     @InjectRepository(UserProfile)
     private readonly userProfileRepo: Repository<UserProfile>,
+    @Inject(CONSTANT_KEYS.LOGGER) private readonly logger: Logger,
   ) {}
 
   @Get('/')
@@ -99,7 +103,7 @@ export default class UsersController {
           throw validationError;
         }
       }
-      console.error(err);
+      this.logger.error(err);
       throw err;
     }
   }

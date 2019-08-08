@@ -1,21 +1,28 @@
+import {Transporter} from 'nodemailer';
 import Container from 'typedi';
 import {
+  AfterInsert,
+  AfterUpdate,
   BeforeInsert,
   BeforeUpdate,
   Column,
   CreateDateColumn,
   Entity,
+  getConnection,
   JoinColumn,
   ManyToOne,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-  getConnection,
 } from 'typeorm';
+import {Logger} from 'winston';
+import * as nodemailer from 'nodemailer';
+import {CONSTANT_KEYS} from '../../helpers/enums/constants.enum';
 import BcryptService from '../../services/bcrypt.service';
 import JwtService from '../../services/jwt.service';
-import {UserProfile} from './user-profile.model';
 import {PermissionLevel} from './permission-level.model';
+import {UserProfile} from './user-profile.model';
+import getEnvSecret from '../../helpers/get-env-secret.helper';
 
 @Entity()
 export class User {
@@ -51,13 +58,59 @@ export class User {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  private readonly jwtService: JwtService;
+  private static sJwtService: JwtService;
 
-  private readonly bcryptService: BcryptService;
+  private static sBcryptService: BcryptService;
 
-  constructor() {
-    this.jwtService = Container.get(JwtService);
-    this.bcryptService = Container.get(BcryptService);
+  private static sMailTransporter: Transporter;
+
+  private static sLogger: Logger;
+
+  private get jwtService(): JwtService {
+    if (!User.sJwtService) {
+      User.sJwtService = Container.get(JwtService);
+    }
+    return User.sJwtService;
+  }
+
+  private get bcryptService(): BcryptService {
+    if (!User.sBcryptService) {
+      User.sBcryptService = Container.get(BcryptService);
+    }
+    return User.sBcryptService;
+  }
+
+  private get mailTransporter(): Transporter {
+    if (!User.sMailTransporter) {
+      User.sMailTransporter = Container.get(CONSTANT_KEYS.MAIL_TRANSPORTER);
+    }
+    return User.sMailTransporter;
+  }
+
+  private get logger(): Logger {
+    if (!User.sLogger) {
+      User.sLogger = Container.get(CONSTANT_KEYS.LOGGER);
+    }
+    return User.sLogger;
+  }
+
+  @AfterInsert()
+  @AfterUpdate()
+  private async sendPasswordToken(): Promise<void> {
+    if (this.passwordToken) {
+      const info = await this.mailTransporter.sendMail({
+        from: '"TypeScript API Boilerplate" <ts-api-boilerplate@github.com>',
+        to: this.email,
+        subject: 'Password recovery token',
+        text: `Your password recovery token is ${this.passwordToken}`,
+      });
+
+      this.logger.info(JSON.stringify(info));
+      if ((await getEnvSecret('NODE_ENV')) !== 'production') {
+        const msgUrl = nodemailer.getTestMessageUrl(info);
+        if (msgUrl) this.logger.info(`Test message url: ${msgUrl}`);
+      }
+    }
   }
 
   @BeforeInsert()

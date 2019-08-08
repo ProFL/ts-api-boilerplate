@@ -3,7 +3,7 @@ import {ClassType} from 'class-transformer/ClassTransformer';
 import {validateOrReject, ValidatorOptions} from 'class-validator';
 import {Middleware} from 'koa';
 import Container from 'typedi';
-import {CONSTANT_KEYS} from '../config/constants.config';
+import {CONSTANT_KEYS} from '../helpers/enums/constants.enum';
 import {KoaContext} from '../helpers/interfaces/koa-context.interface';
 
 export function ValidateBody<T>(

@@ -1,9 +1,6 @@
-import Container from 'typedi';
 import {ValidatorOptions} from 'class-validator';
-
-export enum CONSTANT_KEYS {
-  VALIDATOR_OPTIONS = 'defaults.validationOptions',
-}
+import Container from 'typedi';
+import {CONSTANT_KEYS} from '../helpers/enums/constants.enum';
 
 export default async function constantsSetup(): Promise<void> {
   const defaultValidatorOptions: ValidatorOptions = {
