@@ -6,6 +6,7 @@ import {
   Length,
   MinLength,
   ValidateNested,
+  IsIn,
 } from 'class-validator';
 import {UserProfile} from '../../../../models/user-profile.model';
 import {User} from '../../../../models/user.model';
@@ -44,6 +45,6 @@ export class CreateUserDto implements Partial<User> {
   profile: InnerProfile;
 
   @IsDefined()
-  @IsEnum(PermissionLevels)
+  @IsIn([PermissionLevels.USER])
   permissionLevelId: number;
 }

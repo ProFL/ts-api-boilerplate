@@ -1,0 +1,27 @@
+version: '3.7'
+
+secrets:
+  SECRET_KEY:
+    file: ./docker/secrets/SECRET_KEY
+  TYPEORM_URL:
+    file: ./docker/secrets/TYPEORM_URL
+  POSTGRES_PASSWORD:
+    file: ./docker/secrets/POSTGRES_PASSWORD
+
+networks:
+  net:
+
+services:
+  api:
+    secrets:
+      - TYPEORM_URL
+      - SECRET_KEY
+
+  db:
+    image: postgres:10-alpine
+    environment:
+      - POSTGRES_PASSWORD_FILE=/run/secrets/POSTGRES_PASSWORD
+    secrets:
+      - POSTGRES_PASSWORD
+    networks:
+      - net

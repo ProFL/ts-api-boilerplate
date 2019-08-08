@@ -1,0 +1,51 @@
+version: '3.7'
+
+networks:
+  net:
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    command: yarn docker:dev
+    image: profl/tsapi-boilerplate
+    environment:
+      - NODE_ENV=development
+      - TYPEORM_LOGGING=true
+      - TYPEORM_URL=postgresql://postgres:postgres@db:5432/tsapi_boilerplate
+      - SECRET_KEY=h3ll0-w0rld
+    env_file: .env
+    ports:
+      - 3000:3000
+    networks:
+      - net
+    volumes:
+      - ./__tests__:/home/node/app/__tests__
+      - ./src:/home/node/app/src
+      - ./tsconfig.json:/home/node/app/tsconfig.json:ro
+
+  db:
+    image: postgres:10-alpine
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    env_file: .env
+    networks:
+      - net
+
+  dbAdmin:
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=api@docker.local
+      - PGADMIN_DEFAULT_PASSWORD=123456
+    ports:
+      - 8000:80
+    networks:
+      - net
+
+  mailcatcher:
+    image: schickling/mailcatcher
+    ports:
+      - 1080:1080
+    networks:
+      - net

@@ -1,43 +1,23 @@
 version: '3.7'
 
-secrets:
-  SECRET_KEY:
-    file: ./docker/secrets/SECRET_KEY
-  TYPEORM_URL:
-    file: ./docker/secrets/TYPEORM_URL
-  POSTGRES_PASSWORD:
-    file: ./docker/secrets/POSTGRES_PASSWORD
-
 networks:
   net:
 
 services:
   api:
-    build:
-      context: .
-      dockerfile: ./docker/Dockerfile
-    command: yarn docker:dev
     image: profl/tsapi-boilerplate
+    labels:
+      - traefik.frontend.rule=api.docker.local
+      - traefik.port=3000
     environment:
-      - NODE_ENV=development
-      - TYPEORM_LOGGING=true
-    ports:
-      - 3000:3000
+      - NODE_ENV=production
+      - TYPEORM_LOGGING=false
     networks:
       - net
-    secrets:
-      - SECRET_KEY
-    volumes:
-      - ./__tests__:/home/node/app/__tests__
-      - ./src:/home/node/app/src
-      - ./tsconfig.json:/home/node/app/tsconfig.json:ro
 
   db:
     image: postgres:10-alpine
     environment:
       - POSTGRES_DB=tsapi_boilerplate
-      - POSTGRES_PASSWORD_FILE=/run/secrets/POSTGRES_PASSWORD
-    secrets:
-      - POSTGRES_PASSWORD
     networks:
       - net
